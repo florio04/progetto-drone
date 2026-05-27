@@ -6,6 +6,20 @@
 
 #map { height: 100vh; width: 100%; }
 
+/* Aumenta lo spazio dai bordi interni di tutta la sidebar */
+.offcanvas-body {
+    padding: 24px 32px !important; 
+}
+
+/* Allinea anche l'intestazione (il titolo e la "X" di chiusura) allo stesso margine */
+.offcanvas-header {
+    padding: 24px 32px 12px 32px !important;
+}
+
+/* Se vuoi distanziare leggermente anche i singoli elementi tra di loro */
+.offcanvas-body > * {
+    margin-bottom: 20px; /* Distanza uniforme verticale tra i vari blocchi */
+}
 /* Sidebar */
 .offcanvas { 
     width: 450px !important; 
@@ -77,4 +91,11 @@
 .leaflet-bar {
     border: none !important;
     box-shadow: 0 4px 12px rgba(0,0,0,0.15) !important;
+}
+
+/* Allarga la sidebar sui dispositivi desktop (PC e Tablet grandi) */
+@media (min-width: 768px) {
+    .offcanvas.offcanvas-end {
+        width: 550px !important; /* Portata a 550px (il default di Bootstrap è 400px) */
+    }
 }

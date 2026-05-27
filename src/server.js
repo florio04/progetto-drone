@@ -2,7 +2,7 @@ const express = require('express');
 const { Pool } = require('pg');
 const cors = require('cors');
 const path = require('path');
-
+const geohash = require('ngeohash');
 const app = express();
 app.use(cors());
 
@@ -33,7 +33,8 @@ app.get('/api/punti', async (req, res) => {
                             'temperatura', temperatura,
                             'data_misurazione', data_misurazione,
                             'ora_misurazione', ora_misurazione,
-                            'zona_foto_url', zona_foto_url
+                            'zona_foto_url', zona_foto_url,
+                            'geohash', geohash
                         )
                     )
                 )
@@ -46,6 +47,42 @@ app.get('/api/punti', async (req, res) => {
     }
 });
 
+app.use(express.json());
+
+app.post('/api/drone/posizione', async (req, res) =>{
+    const {lat, lon, temperatura, foto_url } = req.body; 
+
+    if(!lat || !lon){
+        return res.status(400).json({ error: "Latitudine e Longitudine sono obbligatorie" });
+    }
+    try{
+        const hash = geohash.encode(lat, lon, 12);
+
+        const query = `
+            INSERT INTO punti_ricognizione
+            (posizione, temperatura, geohash, zona_foto_url, data_misurazione, ora_misurazione)
+            VALUES (
+                ST_SetSRID(ST_MakePoint($1, $2), 4326),
+                $3, $4, $5, CURRENT_DATE, CURRENT_TIME
+                ) RETURNING *;
+        `;
+        
+        const values = [lon, lat, temperatura, hash, foto_url]; 
+        const result = await pool.query(query, values); 
+
+        res.status(201).json({
+            message: "Posizione salvata con successo", 
+            geohash: hash, 
+            data: result.rows[0]
+        });
+
+    } catch (err) {
+        console.error("Errore inserimento drone:", err.message);
+        res.status(500).json({ error: "Errore interno del server" }); 
+    }
+
+}); 
+
 
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, '../public/index.html'));
@@ -56,3 +93,4 @@ const PORT = 3000;
 app.listen(PORT, () => {
     console.log(` Server attivo su http://localhost:${PORT}`);
 });
+
