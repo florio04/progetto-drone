@@ -1,83 +1,111 @@
+/**
+ * export.js - Gestione esportazione dati in CSV e ZIP (Solo Foto + Fix CORS)
+ */
+
+// --- 1. ESPORTAZIONE CSV ---
 window.esportaCSV = () => {
-    if (!filteredPointFeatures || filteredPointFeatures.length === 0) {
-        alert("Nessun dato corrispondente ai filtri da poter esportare.");
+    const datiDaEsportare = window.filteredPointFeatures || [];
+    if (datiDaEsportare.length === 0) {
+        alert("Nessun dato disponibile nei filtri correnti da esportare.");
         return;
     }
-    
-    let csvContent = "data,ora,latitudine,longitudine,temperatura_celsius,geohash\n";
-    filteredPointFeatures.forEach(item => {
+
+    const headers = ["ID_Punto", "Data_Scatto", "Ora_Scatto", "Temperatura_C", "Latitudine", "Longitudine"];
+    const rows = datiDaEsportare.map(item => {
         const p = item.properties;
-        const coords = item.geometry.coordinates; 
-        csvContent += `${p.data_misurazione},${p.ora_misurazione},${coords[1]},${coords[0]},${p.temperatura},${p.geohash}\n`;
+        const coords = item.geometry.coordinates || [0, 0];
+        return [
+            item.id || "N.D.",
+            p.data_misurazione || "",
+            p.ora_misurazione || "",
+            p.temperatura !== undefined && p.temperatura !== null ? p.temperatura : "Solo Foto",
+            coords[1],
+            coords[0]
+        ];
     });
-    
+
+    const csvContent = [headers.join(";"), ...rows.map(e => e.join(";"))].join("\n");
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
-    
     link.setAttribute("href", url);
-    link.setAttribute("download", `report_filtrato_${new Date().toISOString().slice(0,10)}.csv`);
+    link.setAttribute("download", `report_drone_${new Date().toISOString().slice(0,10)}.csv`);
+    link.style.visibility = 'hidden';
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
 };
 
+// --- 2. ESPORTAZIONE ZIP (SOLE IMMAGINI + FIX CORS) ---
 window.esportaZIP = async () => {
-    const btn = document.getElementById('btn-download-zip');
-    const originalText = btn.innerHTML;
+    const datiDaEsportare = window.filteredPointFeatures || [];
     
-    const photos = [...new Set(filteredPointFeatures.map(f => f.properties.zona_foto_url).filter(Boolean))];
-    if (photos.length === 0) {
-        alert("Nessuna immagine disponibile per i criteri di filtro selezionati.");
+    // Filtro per includere solo i punti con un'immagine valida
+    const puntiConFoto = datiDaEsportare.filter(item => item.properties && item.properties.zona_foto_url);
+
+    if (puntiConFoto.length === 0) {
+        alert("Nessuna immagine disponibile nei filtri correnti da inserire nello ZIP.");
         return;
     }
-    
-    btn.disabled = true;
-    btn.innerHTML = `<span class="spinner-border spinner-border-sm me-1"></span> Elaborazione...`;
-    
+    if (typeof JSZip === "undefined") {
+        alert("Errore: La libreria JSZip non è caricata.");
+        return;
+    }
+
+    const btnZip = document.getElementById('btn-download-zip');
+    const testoOriginale = btnZip ? btnZip.innerHTML : "Download ZIP";
+    if (btnZip) {
+        btnZip.innerHTML = `<span class="spinner-border spinner-border-sm me-1"></span> Compressione...`;
+        btnZip.disabled = true;
+    }
+
     const zip = new JSZip();
-    let downloadedCount = 0;
-    let skippedCount = 0;
-    
-    for (let i = 0; i < photos.length; i++) {
-        const url = photos[i];
+
+    // Download sequenziale immagini con normalizzazione per host locali (CORS bypass)
+    for (const item of puntiConFoto) {
+        let urlFoto = item.properties.zona_foto_url;
+        
         try {
-            const response = await fetch(url);
-            if (!response.ok) throw new Error("Errore HTTP");
-            const blob = await response.blob();
-            zip.file(`rilievo_filtrato_${downloadedCount + 1}.jpg`, blob);
-            downloadedCount++;
+            if (!urlFoto.startsWith('http://') && !urlFoto.startsWith('https://')) {
+                const pulito = urlFoto.startsWith('/') ? urlFoto.substring(1) : urlFoto;
+                urlFoto = `http://localhost:3000/${pulito}`;
+            }
+
+            const nomeFile = urlFoto.split('/').pop();
+            const response = await fetch(urlFoto, { mode: 'cors' });
+            
+            if (response.ok) {
+                const blobData = await response.blob();
+                if (blobData.size > 0) {
+                    // Archiviazione file nella root dello ZIP
+                    zip.file(nomeFile, blobData); 
+                }
+            } else {
+                console.error(`Errore download foto: ${urlFoto}. Status: ${response.status}`);
+            }
         } catch (err) {
-            console.warn(`Immagine saltata: ${url}`, err.message);
-            skippedCount++;
+            console.warn(`Errore di rete per l'URL: ${urlFoto}`, err);
         }
     }
-    
-    if (downloadedCount === 0) {
-        alert("Impossibile creare lo ZIP: link corrotti o blocchi CORS.");
-        btn.disabled = false;
-        btn.innerHTML = originalText;
-        return;
-    }
-    
+
+    // Generazione finale dell'archivio ZIP
     try {
         const content = await zip.generateAsync({ type: "blob" });
-        const zipUrl = URL.createObjectURL(content);
+        const url = URL.createObjectURL(content);
         const link = document.createElement("a");
-        link.href = zipUrl;
-        link.download = `foto_filtrate_${new Date().toISOString().slice(0,10)}.zip`;
+        link.setAttribute("href", url);
+        link.setAttribute("download", `immagini_drone.zip`);
+        link.style.visibility = 'hidden';
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
-        
-        if (skippedCount > 0) {
-            alert(`Archivio creato (${downloadedCount} foto). Saltate ${skippedCount} immagini per problemi di rete.`);
-        }
-    } catch (error) {
-        console.error(error);
-        alert("Errore durante il confezionamento dello ZIP.");
+    } catch (zipErr) {
+        console.error("Errore generazione ZIP:", zipErr);
+        alert("Errore durante la creazione dello ZIP.");
     } finally {
-        btn.disabled = false;
-        btn.innerHTML = originalText;
+        if (btnZip) {
+            btnZip.innerHTML = testoOriginale;
+            btnZip.disabled = false;
+        }
     }
 };
