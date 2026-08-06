@@ -1,0 +1,21 @@
+Avvio server postgress
+    sudo service postgresql start
+
+Avvio mosquitto
+    sudo mosquitto -v 
+
+Avvio Mappa
+    cd Mappa
+    node src/server.js
+
+Avvio Gateway
+    cd Gateway
+    source .venv/bin/activate
+    uvicorn gateway_mqtt:app --relaod
+
+Avvio Simulazione
+    LIBGL_ALWAYS_SOFTWARE=1 ./coppeliaSim.sh
+    source .venv/bin/activate
+    python Controller.py
+
+
