@@ -1,0 +1,171 @@
+### ==========================================
+### CONFIGURAZIONE VARIABILI AMBIENTE
+### ==========================================
+@baseUrl = http://localhost:3000
+
+
+### ==========================================
+### 1. VERIFICA DASHBOARD & SERVER
+### ==========================================
+
+# Home Page (Serve il file index.html)
+GET {{baseUrl}}/
+
+
+### ==========================================
+### 2. OPERAZIONI DI LETTURA (READ)
+### ==========================================
+
+### Estrae SOLO i punti ISOLATI (esterni a qualsiasi area)
+GET {{baseUrl}}/api/punti
+
+### Estrae TUTTI i punti presenti nel database (Global Collection)
+GET {{baseUrl}}/api/punti/tutti
+
+### Estrae un singolo punto specifico tramite ID
+GET {{baseUrl}}/api/punti/1
+
+### Estrae TUTTE le aree con i rispettivi punti interni annidati
+GET {{baseUrl}}/api/aree
+
+### Estrae una singola area specifica tramite ID con i punti interni
+GET {{baseUrl}}/api/aree/1
+
+
+### ==========================================
+### 3. OPERAZIONI DI CREAZIONE (CREATE)
+### ==========================================
+
+### Salva posizione, temperatura e foto inviate dal drone (Transazionale)
+POST {{baseUrl}}/api/drone/posizione
+Content-Type: application/json
+
+{
+  "lat": 0.000000,
+  "lon": 0.000000,
+  "temperatura": 20.0,
+  "foto_url": "/percorso/generico/foto.jpg",
+  "data_ora": "2026-01-01T00:00:00Z"
+}
+
+### Registrazione di una nuova area poligonale (GeoJSON Polygon)
+# Nota: In GeoJSON le coordinate sono nel formato [Longitudine, Latitudine]
+POST {{baseUrl}}/api/aree
+Content-Type: application/json
+
+{
+  "nome": "Area Campione A",
+  "geometria": {
+    "type": "Polygon",
+    "coordinates": [
+      [
+        [0.000000, 0.000000],
+        [0.001000, 0.000000],
+        [0.001000, 0.001000],
+        [0.000000, 0.001000],
+        [0.000000, 0.000000]
+      ]
+    ]
+  }
+}
+
+
+### ==========================================
+### 4. OPERAZIONI DI AGGIORNAMENTO (UPDATE)
+### ==========================================
+
+### Modifica il perimetro o il nome di un'area
+PUT {{baseUrl}}/api/aree/1
+Content-Type: application/json
+
+{
+  "nome": "Area Campione A - Modificata",
+  "geometria": {
+    "type": "Polygon",
+    "coordinates": [
+      [
+        [0.000000, 0.000000],
+        [0.002000, 0.000000],
+        [0.002000, 0.002000],
+        [0.000000, 0.002000],
+        [0.000000, 0.000000]
+      ]
+    ]
+  }
+}
+
+### Modifica la posizione geografica di un punto esistente
+PUT {{baseUrl}}/api/punti/1
+Content-Type: application/json
+
+{
+  "lat": 0.000000,
+  "lon": 0.000000
+}
+
+
+### ==========================================
+### 5. GESTIONE TABELLA MISURAZIONI (CRUD)
+### ==========================================
+
+### Aggiunge una nuova misurazione di temperatura ad un punto
+POST {{baseUrl}}/api/misurazioni
+Content-Type: application/json
+
+{
+  "id_punto": 1,
+  "temperatura": 20.0
+}
+
+### Legge lo storico di tutte le misurazioni di un punto specifico
+GET {{baseUrl}}/api/punti/1/misurazioni
+
+### Modifica una specifica misurazione esistente
+PUT {{baseUrl}}/api/misurazioni/1
+Content-Type: application/json
+
+{
+  "temperatura": 21.5
+}
+
+### Elimina una specifica misurazione
+DELETE {{baseUrl}}/api/misurazioni/1
+
+
+### ==========================================
+### 6. GESTIONE TABELLA IMMAGINI (CRUD)
+### ==========================================
+
+### Aggiunge una nuova immagine associata ad un punto
+POST {{baseUrl}}/api/immagini
+Content-Type: application/json
+
+{
+  "id_punto": 1,
+  "percorso_file": "/percorso/generico/foto_01.jpg"
+}
+
+### Legge la galleria delle immagini per un determinato punto
+GET {{baseUrl}}/api/punti/1/immagini
+
+### Aggiorna il percorso file di un'immagine registrata
+PUT {{baseUrl}}/api/immagini/1
+Content-Type: application/json
+
+{
+  "percorso_file": "/percorso/generico/foto_01_modificata.jpg"
+}
+
+### Rimuove il riferimento a un'immagine
+DELETE {{baseUrl}}/api/immagini/1
+
+
+### ==========================================
+### 7. OPERAZIONI DI ELIMINAZIONE (DELETE)
+### ==========================================
+
+### Rimuove un punto (in CASCADE elimina anche misurazioni e foto collegate)
+DELETE {{baseUrl}}/api/punti/1
+
+### Rimuove un'area geometrica (Senza eliminare i punti al suo interno)
+DELETE {{baseUrl}}/api/aree/1

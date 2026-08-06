@@ -1,0 +1,101 @@
+:root {
+    --primary-blue: #0056b3;
+    --bg-light: #f8f9fa;
+    --border-color: #dee2e6;
+}
+
+#map { height: 100vh; width: 100%; }
+
+/* Aumenta lo spazio dai bordi interni di tutta la sidebar */
+.offcanvas-body {
+    padding: 24px 32px !important; 
+}
+
+/* Allinea anche l'intestazione (il titolo e la "X" di chiusura) allo stesso margine */
+.offcanvas-header {
+    padding: 24px 32px 12px 32px !important;
+}
+
+/* Se vuoi distanziare leggermente anche i singoli elementi tra di loro */
+.offcanvas-body > * {
+    margin-bottom: 20px; /* Distanza uniforme verticale tra i vari blocchi */
+}
+/* Sidebar */
+.offcanvas { 
+    width: 450px !important; 
+    border-left: none;
+}
+
+.filter-label {
+    font-size: 0.7rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    color: #495057;
+    margin-bottom: 5px;
+    display: block;
+}
+
+/* Form Inputs */
+.form-control {
+    border: 1px solid var(--border-color);
+    font-size: 0.9rem;
+    border-radius: 8px;
+}
+
+/* List Items */
+.list-group-item {
+    padding: 1.25rem 1.5rem;
+    border-left: 5px solid transparent;
+    transition: all 0.2s;
+}
+
+.list-group-item:hover {
+    background-color: var(--bg-light);
+    border-left-color: var(--primary-blue);
+}
+
+/* Dettaglio Misurazione */
+.temp-display {
+    font-size: 3.5rem;
+    font-weight: 800;
+    color: #dc3545;
+    letter-spacing: -2px;
+}
+
+.gps-card {
+    background: #f1f3f5;
+    border-radius: 12px;
+    padding: 15px;
+    border: 1px solid #e9ecef;
+}
+
+.img-container {
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    cursor: zoom-in;
+}
+
+.img-container img {
+    transition: transform 0.3s ease;
+}
+
+.img-container:hover img {
+    transform: scale(1.03);
+}
+
+.leaflet-container {
+    background: #000 !important;
+}
+
+.leaflet-bar {
+    border: none !important;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15) !important;
+}
+
+/* Allarga la sidebar sui dispositivi desktop (PC e Tablet grandi) */
+@media (min-width: 768px) {
+    .offcanvas.offcanvas-end {
+        width: 550px !important; /* Portata a 550px (il default di Bootstrap è 400px) */
+    }
+}
