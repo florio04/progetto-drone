@@ -1,9 +1,5 @@
 [README.md](https://github.com/user-attachments/files/30795408/README.md)
-# Platform per Analisi Spaziale e Telemetria Drone
-
-Un'applicazione web full-stack per la gestione, l'analisi territoriale e la visualizzazione cartografica di dati telemetrici e rilievi fotografici raccolti da droni. Il sistema integra un database geospaziale **PostgreSQL + PostGIS**, un backend **Express (Node.js)** e un frontend interattivo basato su **Leaflet.js** con clustering dinamico via **Geohash**.
-
-## Descrizione del Progetto
+# Descrizione del Progetto
 
 Il progetto ha l'obiettivo di centralizzare e analizzare i rilievi territoriali effettuati da droni (misurazioni di temperatura, foto georeferenziate, posizioni GPS e perimetri di aree monitorate come serre o zone agricole).
 
